@@ -517,7 +517,7 @@ void gz::sim::systems::ArduPilotPlugin::Configure(
         this->dataPtr.get(),
         std::placeholders::_1));
 
-  gzlog << "[" << this->dataPtr->modelName << "] "
+  gzmsg << "[" << this->dataPtr->modelName << "] "
         << "ArduPilot ready to fly. The force will be with you" << "\n";
 }
 
@@ -1259,8 +1259,11 @@ bool gz::sim::systems::ArduPilotPlugin::InitSockets(sdf::ElementPtr _sdf) const
     this->dataPtr->fdm_address =
         _sdf->Get("fdm_addr", static_cast<std::string>("127.0.0.1")).first;
 
-    this->dataPtr->fdm_port_in =
-        _sdf->Get("fdm_port_in", static_cast<uint32_t>(9002)).first;
+    // get fdm port from environment variable or use default
+    const char* fdm_port_str = std::getenv("GZ_ARDUPILOT_PLUGIN_FDM_PORT");
+    if (fdm_port_str) {
+        this->dataPtr->fdm_port_in = static_cast<uint16_t>(std::stoi(fdm_port_str));
+    }
 
     // output port configuration is automatic
     if (_sdf->HasElement("listen_addr")) {
@@ -1282,7 +1285,7 @@ bool gz::sim::systems::ArduPilotPlugin::InitSockets(sdf::ElementPtr _sdf) const
             << " aborting plugin.\n";
         return false;
     }
-    gzlog << "[" << this->dataPtr->modelName << "] "
+    gzmsg << "[" << this->dataPtr->modelName << "] "
         << "flight dynamics model @ "
         << this->dataPtr->fdm_address << ":" << this->dataPtr->fdm_port_in
         << "\n";
@@ -1567,7 +1570,7 @@ bool gz::sim::systems::ArduPilotPlugin::ReceiveServoPacket()
     {
         this->dataPtr->arduPilotOnline = true;
 
-        gzlog << "[" << this->dataPtr->modelName << "] "
+        gzmsg << "[" << this->dataPtr->modelName << "] "
             << "Connected to ArduPilot controller @ "
             << this->dataPtr->fcu_address << ":" << this->dataPtr->fcu_port_out
             << "\n";
